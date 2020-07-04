@@ -1,5 +1,5 @@
 '''RotorHazard server script'''
-RELEASE_VERSION = "2.2.0" # Public release version code
+RELEASE_VERSION = "BPill_2.2.0" # Public release version code
 SERVER_API = 27 # Server API version
 NODE_API_SUPPORTED = 18 # Minimum supported node version
 NODE_API_BEST = 32 # Most recent node API
