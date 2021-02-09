@@ -66,10 +66,19 @@ import Language
 import RHUtils
 from RHUtils import catchLogExceptionsWrapper
 from Language import __
-from ClusterNodeSet import SecondaryNode, ClusterNodeSet
 from util.SendAckQueue import SendAckQueue
 import RHGPIO
 import util.stm32loader as stm32loader
+
+sys.path.append('../interface')
+sys.path.append('/home/pi/RotorHazard/src/interface')  # Needed to run on startup
+from Plugins import Plugins, search_modules
+
+# Import Plugins
+plugins = Plugins(path=['plugins'])
+plugins.discover()
+
+from ClusterNodeSet import SecondaryNode, ClusterNodeSet
 
 # Events manager
 from eventmanager import Evt, EventManager
@@ -79,10 +88,6 @@ Events = EventManager()
 # LED imports
 from led_event_manager import LEDEventManager, NoLEDManager, ClusterLEDManager, LEDEvent, Color, ColorPattern, hexToColor
 
-sys.path.append('../interface')
-sys.path.append('/home/pi/RotorHazard/src/interface')  # Needed to run on startup
-
-from Plugins import Plugins, search_modules
 from Sensors import Sensors
 import RHRace
 from RHRace import StartBehavior, WinCondition, WinStatus, RaceStatus
@@ -5684,7 +5689,7 @@ if strip:
     try:
         strip.begin()
         led_manager = LEDEventManager(Events, strip)
-        led_effects = Plugins(prefix='led_handler')
+        led_effects = Plugins(prefix='led_handler', path=['plugins'])
         led_effects.discover()
         for led_effect in led_effects:
             led_manager.registerEffect(led_effect)
@@ -5694,7 +5699,7 @@ if strip:
         led_manager = NoLEDManager()
 elif CLUSTER and CLUSTER.hasRecEventsSecondaries():
     led_manager = ClusterLEDManager()
-    led_effects = Plugins(prefix='led_handler')
+    led_effects = Plugins(prefix='led_handler', path=['plugins'])
     led_effects.discover()
     for led_effect in led_effects:
         led_manager.registerEffect(led_effect)

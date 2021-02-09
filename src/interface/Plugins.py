@@ -8,26 +8,30 @@ from six.moves import UserList
 logger = logging.getLogger(__name__)
 
 
-def search_modules(prefix=None, suffix=None):
+def search_modules(prefix=None, suffix=None, path=None):
     plugin_modules = []
-    for loader, name, ispkg in pkgutil.iter_modules():
+    for loader, name, ispkg in pkgutil.iter_modules(path):
         if (prefix is None or name.startswith(prefix+'_')) and (suffix is None or name.endswith('_'+suffix)):
             try:
+                if path:
+                    name = path[0] + '.' + name
                 plugin_module = importlib.import_module(name)
                 plugin_modules.append(plugin_module)
                 logger.info('Loaded module {0}'.format(name))
-            except ImportError:
+            except ImportError as err:
                 logger.debug('Module {0} not imported (not supported or may require additional dependencies)'.format(name))
+                logger.debug(err)
     return plugin_modules
 
 class Plugins(UserList):
-    def __init__(self, prefix=None, suffix=None):
+    def __init__(self, prefix=None, suffix=None, path=None):
         UserList.__init__(self)
         self.prefix = prefix
         self.suffix = suffix
+        self.path = path
 
     def discover(self, includeOffset=False, *args, **kwargs):
-        for plugin_module in search_modules(prefix = self.prefix, suffix = self.suffix):
+        for plugin_module in search_modules(prefix = self.prefix, suffix = self.suffix, path = self.path):
             if includeOffset:
                 kwargs['idxOffset'] = len(self.data)
             try:
