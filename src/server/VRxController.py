@@ -541,28 +541,48 @@ class VRxController:
     #############
     # Camera Type
     #############
-
-    @property
-    def camera_type(self):
-        self._camera_type = [seat.seat_camera_type for seat in self._seats]
-        return self._camera_type
-
-    @camera_type.setter
-    def camera_type(self, camera_types):
-        """ set the receiver camera types
-        camera_types: dict
-            key: seat_number
-            value: desired camera_type in ['N','P','A']
-        """
-        for seat_index in camera_types:
-            c = camera_types[seat_index]
-            self._seats[seat_index].seat_camera_type = c
-
     def set_seat_camera_type(self, seat_number, camera_type):
-        self._seats[seat_number].seat_camera_type = camera_type
+        vfa = clearview.comspecs.cv_device_limits['video_format_list']
+        if camera_type not in vfa:
+            raise ValueError("Invalid camera type of %s"%camera_type)
 
-    def get_seat_camera_type(self, seat_number, camera_type):
-        self._seats[seat_number].seat_camera_type
+        if seat_number == VRxALL:
+            seat = self._seat_broadcast
+            seat.set_camera_type(camera_type)
+        else:
+            self._seats[seat_number].set_camera_type(camera_type)
+
+    def get_seat_camera_type(self, seat_number=VRxALL):
+        if seat_number == VRxALL:
+            seat = self._seat_broadcast
+        else:
+            seat = self._seats[seat_number]
+        seat.get_seat_camera_type()
+
+
+
+    #############
+    # OSD Postion
+    #############
+    def set_seat_osd_position(self, seat_number, osd_position):
+        ops = (clearview.comspecs.cv_device_limits['min_osd_position'],
+               clearview.comspecs.cv_device_limits['max_osd_position'])
+        if not (ops[0] <= osd_position <= ops[1]):
+            raise ValueError("Invalid osd position of %s"%osd_position)
+
+        if seat_number == VRxALL:
+            seat = self._seat_broadcast
+            seat.set_osd_position(osd_position)
+        else:
+            self._seats[seat_number].set_osd_position(osd_position)
+
+    def get_seat_osd_position(self, seat_number=VRxALL):
+        if seat_number == VRxALL:
+            seat = self._seat_broadcast
+        else:
+            seat = self._seats[seat_number]
+        seat.get_seat_osd_position()
+
 
     ##############
     # OSD Messages
@@ -668,7 +688,7 @@ class VRxController:
             # See TODO in on_message_status
             self.req_status_targeted("variable", rx_name)
             self.req_status_targeted("static", rx_name)
-            
+
 
 
 
@@ -697,12 +717,12 @@ class VRxController:
                 extracted_data = json.loads(payload)
 
             except:
-                self.logger.warning("Can't load json data from '%s' of '%s'", rx_name, payload) 
+                self.logger.warning("Can't load json data from '%s' of '%s'", rx_name, payload)
                 self.logger.debug(traceback.format_exc())
                 rx_data["valid_rx"] = False
             else:
                 rx_data["valid_rx"] = True
-                rx_data.update(extracted_data) 
+                rx_data.update(extracted_data)
 
                 if "lock" in extracted_data:
                     rep_lock = extracted_data["lock"]
@@ -711,14 +731,14 @@ class VRxController:
                     rx_data["cam_forced_or_auto"] = rep_lock[1]
                     rx_data["lock_status"] = rep_lock[2]
 
-                
+
 
                 #TODO only fire event if the data changed
                 self.Events.trigger(Evt.VRX_DATA_RECEIVE, {
                     'rx_name': rx_name,
                     })
 
-                
+
                 if rx_data["needs_config"] == True and rx_data["valid_rx"] == True:
                     self.perform_initial_receiver_config(rx_name)
 
@@ -801,6 +821,7 @@ class VRxSeat(BaseVRxSeat):
         self._seat_frequency = seat_frequency
         self._seat_camera_type = seat_camera_type
         self._seat_lock_status = None
+        self._seat_cmd_topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
 
 
         """
@@ -836,7 +857,7 @@ class VRxSeat(BaseVRxSeat):
             raise Exception("seat_number out of range")
 
     def set_seat_number(self, new_seat_number):
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         cmd = cmd = json.dumps({"seat": str(new_seat_number)})
         self._mqttc.publish(topic,cmd)
         return
@@ -870,7 +891,7 @@ class VRxSeat(BaseVRxSeat):
             # For ClearView, set the band and channel
             cv_bc = clearview.comspecs.frequency_to_bandchannel_dict(frequency)
             if cv_bc:
-                topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+                topic = self._seat_cmd_topic
                 self._mqttc.publish(topic, json.dumps(cv_bc))
 
             else:
@@ -899,41 +920,68 @@ class VRxSeat(BaseVRxSeat):
         print("TODO seat_lock_status property")
 
     def get_seat_lock_status(self,):
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         report_req = json.dumps({"lock": "?"})
         self._mqttc.publish(topic,report_req)
         return report_req
 
     def request_static_status(self):
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         msg = ESP_COMMANDS["Request Static Status"]
         self._mqttc.publish(topic,msg)
 
     def request_variable_status(self):
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         msg = ESP_COMMANDS["Request Variable Status"]
         self._mqttc.publish(topic,msg)
 
     def set_message_direct(self, message):
         """Send a raw message to the OSD"""
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         cmd = json.dumps({"user_msg" : message})
         self._mqttc.publish(topic, cmd)
         return cmd
 
     def turn_off_osd(self):
         """Turns off all OSD elements except user message"""
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         cmd = json.dumps({"osd_visibility" : "D"})
         self._mqttc.publish(topic, cmd)
         return cmd
 
     def turn_on_osd(self):
         """Turns on all OSD elements except user message"""
-        topic = mqtt_publish_topics["cv1"]["receiver_command_esp_seat_topic"][0]%self._seat_number
+        topic = self._seat_cmd_topic
         cmd = json.dumps({"osd_visibility" : "E"})
         self._mqttc.publish(topic, cmd)
         return cmd
+
+    def set_camera_type(self, camera_type):
+        """Sets camera type to [N,A,P]"""
+        topic = self._seat_cmd_topic
+        cmd = json.dumps({"video_format" : camera_type})
+        self._mqttc.publish(topic, cmd)
+        return cmd
+
+    def get_camera_type(self):
+        """Get camera type"""
+        topic = self._seat_cmd_topic
+        msg = json.dumps({"video_format" : "?"})
+        self._mqttc.publish(topic,msg)
+
+    def set_osd_position(self, osd_position):
+        """Sets osd position to <0-7>"""
+        topic = self._seat_cmd_topic
+        cmd = json.dumps({"osd_position" : osd_position})
+        self._mqttc.publish(topic, cmd)
+        return cmd
+
+    def get_osd_position(self):
+        """Get osd position"""
+        topic = self._seat_cmd_topic
+        msg = json.dumps({"osd_position" : "?"})
+        self._mqttc.publish(topic,msg)
+
 
     def _update_osd_by_fields(self):
         #todo
@@ -966,7 +1014,7 @@ class VRxBroadcastSeat(BaseVRxSeat):
         cmd = json.dumps({"osd_visibility" : "D"})
         self._mqttc.publish(topic, cmd)
         return cmd
-    
+
     def turn_on_osd(self):
         """Turns on all OSD elements except user message"""
         topic = self._rx_cmd_esp_all_topic
@@ -996,6 +1044,34 @@ class VRxBroadcastSeat(BaseVRxSeat):
         report_req = json.dumps({"lock":"?"})
         self._mqttc.publish(topic,report_req)
         return report_req
+
+    def set_camera_type(self, camera_type):
+        """Sets camera type to [N,A,P]"""
+        topic = self._rx_cmd_esp_all_topic
+        cmd = json.dumps({"video_format" : camera_type})
+        self._mqttc.publish(topic, cmd)
+        return cmd
+
+    def get_camera_type(self):
+        """Gets camera type"""
+        topic = self._rx_cmd_esp_all_topic
+        cmd = json.dumps({"video_format" : "?"})
+        self._mqttc.publish(topic, cmd)
+        return cmd
+
+    def set_osd_position(self, osd_position):
+        """Sets osd position to <0-7>"""
+        topic = self._rx_cmd_esp_all_topic
+        cmd = json.dumps({"osd_position" : osd_position})
+        self._mqttc.publish(topic, cmd)
+        return cmd
+
+    def get_osd_position(self):
+        """Gets osd position"""
+        topic = self._rx_cmd_esp_all_topic
+        cmd = json.dumps({"osd_position" : "?"})
+        self._mqttc.publish(topic, cmd)
+        return cmd
 
 class ClearViewValInterpret:
     """Holds constants of the protocols"""
