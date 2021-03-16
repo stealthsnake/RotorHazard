@@ -9,7 +9,7 @@ constexpr mtime_t RX5808_MIN_BUSTIME = 30;  // after set freq need to wait this 
 mtime_t RxModule::lastBusTimeMs = 0;
 
 // Calculate rx5808 register hex value for given frequency in MHz
-static uint16_t freqMhzToRegVal(uint16_t freqInMhz)
+static uint16_t freqMhzToRegVal(freq_t freqInMhz)
 {
     uint16_t tf, N, A;
     tf = (freqInMhz - 479) / 2;
@@ -67,7 +67,7 @@ bool RxModule::reset()
 }
 
 // Set the frequency given on the rx5808 module
-bool RxModule::setFrequency(uint16_t frequency)
+bool RxModule::setFrequency(freq_t frequency)
 {
     bool avail = checkBusAvailable();
     if (!avail) {

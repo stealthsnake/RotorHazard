@@ -26,7 +26,7 @@ class RxModule {
     RxModule& operator=(RxModule&&) = delete;
 
     void init(uint16_t dataPin, uint16_t clkPin, uint16_t selPin, uint16_t rssiPin);
-    bool setFrequency(uint16_t frequency);
+    bool setFrequency(freq_t frequency);
     bool setPower(uint32_t options);
     rssi_t readRssi();
     bool powerUp();
