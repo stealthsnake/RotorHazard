@@ -8,7 +8,27 @@ import Config
 from eventmanager import Evt
 from led_event_manager import LEDEffect, Color
 import gevent
-from PIL import Image
+import os
+from PIL import Image, ImageDraw
+
+def userBitmap(args):
+    if args['RACE'].results and 'by_race_time' in args['RACE'].results:
+        leaderboard = args['RACE'].results['by_race_time']
+    else:
+        return False
+
+    for line in leaderboard:
+        if args['node_index'] == line['node']:
+            callsign = line['callsign']
+            break
+
+    if callsign:
+        args['bitmaps'] = [
+            {"image": "static/user/" + callsign + ".png", "delay": 0}
+        ]
+        showBitmap(args)
+    else:
+        return False
 
 def showBitmap(args):
     if 'strip' in args:
@@ -35,19 +55,40 @@ def showBitmap(args):
     bitmaps = args['bitmaps']
     if bitmaps and bitmaps is not None:
         for bitmap in bitmaps:
-            img = Image.open(bitmap['image'])
-            delay = bitmap['delay']
+            if os.path.exists(bitmap['image']):
+                img = Image.open(bitmap['image'])
+            else:
+                img = Image.new('RGB', (1, 1))
+                draw = ImageDraw.Draw(img)
+                if 'color' in args:
+                    draw.rectangle((0, 0, 1, 1), fill=convertColor(args['color']))
+                else:
+                    draw.rectangle((0, 0, 1, 1), fill=(127, 127, 127))
 
             img = img.rotate(90 * Config.LED['PANEL_ROTATE'])
             img = img.resize((Config.LED['LED_COUNT'] // Config.LED['LED_ROWS'], Config.LED['LED_ROWS']))
 
             setPixels(img)
             strip.show()
+
+            delay = bitmap['delay']
             gevent.sleep(delay/1000.0)
+
+def convertColor(color):
+    return color >> 16, (color >> 8) % 256, color % 256
 
 def discover(*args, **kwargs):
     # state bitmaps
     return [
+    LEDEffect("bitmapCallsign", "Image: user/[callsign].png", userBitmap, {
+            'manual': False,
+            'include': [Evt.CROSSING_ENTER, Evt.CROSSING_EXIT, Evt.RACE_LAP_RECORDED, Evt.RACE_WIN],
+            'exclude': [Evt.ALL],
+            'recommended': [Evt.CROSSING_ENTER, Evt.CROSSING_EXIT, Evt.RACE_LAP_RECORDED, Evt.RACE_WIN],
+        }, {
+            'time': 5
+        }),
+
     LEDEffect("bitmapRHLogo", "Image: RotorHazard", showBitmap, {
             'include': [Evt.SHUTDOWN],
             'recommended': [Evt.STARTUP]
