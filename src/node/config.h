@@ -93,17 +93,18 @@
 #define LEGACY_HARDWARE_SELECT_PIN_5 8
 
 #elif XIAO_BOARD_FLAG
-#define RX5808_DATA_PIN 10            //DATA output line to RX5808 modules
-#define RX5808_CLK_PIN 8             //CLK output line to RX5808 modules
+#define RX5808_DATA_PIN PA6           //Pin 9 to CH3/SPI-CLK  - DATA output line to RX5808 modules
+#define RX5808_CLK_PIN PA7            //Pin 8 to CH1/SPI-DATA - CLK output line to RX5808 modules
 
-#define RX5808_SEL0_PIN 4            //SEL output lines to RX5808 modules
-#define RX5808_SEL1_PIN 5
-#define RX5808_SEL2_PIN 6
-#define RX5808_SEL3_PIN 7
-#define RSSI_INPUT0_PIN A0             //RSSI inputs from RX5808 modules
-#define RSSI_INPUT1_PIN A1
-#define RSSI_INPUT2_PIN A2
-#define RSSI_INPUT3_PIN A3
+#define RX5808_SEL0_PIN PA8           //Pin 0 to CH2 SEL output lines to RX5808 modules 01
+#define RX5808_SEL1_PIN PA9           //Pin 1 to CH2 SEL output lines to RX5808 modules 02
+#define RX5808_SEL2_PIN PB08          //Pin 2 to CH2 SEL output lines to RX5808 modules 03
+#define RX5808_SEL3_PIN PB08          //Pin 3 to CH2 SEL output lines to RX5808 modules 04
+
+#define RSSI_INPUT0_PIN PA02          //Pin 4 RSSI inputs from RX5808 modules 01
+#define RSSI_INPUT1_PIN PA4           //Pin 5 RSSI inputs from RX5808 modules 02
+#define RSSI_INPUT2_PIN PA10          //Pin 6 RSSI inputs from RX5808 modules 03
+#define RSSI_INPUT3_PIN PA11          //Pin 7 RSSI inputs from RX5808 modules 04 
 
 #define MODULE_LED_ONSTATE HIGH
 #define MODULE_LED_OFFSTATE LOW
