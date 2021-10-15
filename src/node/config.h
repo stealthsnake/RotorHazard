@@ -4,8 +4,11 @@
 #include <Arduino.h>
 #include "util/rhtypes.h"
 
+#define STM32_CORE_VERSION 1
+
 #ifdef STM32_CORE_VERSION
-#define STM32_MODE_FLAG 1  // 1 for STM 32-bit processor running multiple nodes
+#define STM32_MODE_FLAG 1  // 1 for STM 32-bit proessor running multiple nodes
+#define XIAO_BOARD_FLAG 1
 #else
 #define STM32_MODE_FLAG 0  // 0 for Arduino processor running single node
 #endif
@@ -33,7 +36,7 @@
 
 #define SERIAL_BAUD_RATE 921600
 #define MULTI_RHNODE_MAX 8
-#define STM32_SERIALUSB_FLAG 0  // 1 to use BPill USB port for serial link
+#define STM32_SERIALUSB_FLAG 1  // 1 to use BPill USB port for serial link
 
 #else
 // value returned by READ_RHFEAT_FLAGS command
@@ -88,6 +91,19 @@
 #define LEGACY_HARDWARE_SELECT_PIN_3 6
 #define LEGACY_HARDWARE_SELECT_PIN_4 7
 #define LEGACY_HARDWARE_SELECT_PIN_5 8
+
+#elif XIAO_BOARD_FLAG
+#define RX5808_DATA_PIN 10            //DATA output line to RX5808 modules
+#define RX5808_CLK_PIN 8             //CLK output line to RX5808 modules
+
+#define RX5808_SEL0_PIN 4            //SEL output lines to RX5808 modules
+#define RX5808_SEL1_PIN 5
+#define RX5808_SEL2_PIN 6
+#define RX5808_SEL3_PIN 7
+#define RSSI_INPUT0_PIN A0             //RSSI inputs from RX5808 modules
+#define RSSI_INPUT1_PIN A1
+#define RSSI_INPUT2_PIN A2
+#define RSSI_INPUT3_PIN A3
 
 #define MODULE_LED_ONSTATE HIGH
 #define MODULE_LED_OFFSTATE LOW

@@ -46,6 +46,8 @@ const char *firmwareBuildTimeString = "FIRMWARE_BUILDTIME: " __TIME__;
 // node processor type
 #if !STM32_MODE_FLAG
 const char *firmwareProcTypeString = "FIRMWARE_PROCTYPE: Arduino";
+#elif XIAO_BOARD_FLAG
+const char *firmwareProcTypeString = "FIRMWARE_PROCTYPE: SAND XAIO";
 #else
 #if !STM32_F4_PROCTYPE
 const char *firmwareProcTypeString = "FIRMWARE_PROCTYPE: STM32F1";

@@ -487,6 +487,19 @@ void RssiNode::rssiEndCrossing()
 
 int RssiNode::rx5808SelPinForNodeIndex(int nIdx)
 {
+#if XIAO_BOARD_FLAG
+    switch (nIdx)
+    {
+        case 1:
+            return RX5808_SEL1_PIN;
+        case 2:
+            return RX5808_SEL2_PIN;
+        case 3:
+            return RX5808_SEL3_PIN;
+        default:
+            return RX5808_SEL0_PIN;
+    }
+#else
     switch (nIdx)
     {
         case 1:
@@ -506,10 +519,24 @@ int RssiNode::rx5808SelPinForNodeIndex(int nIdx)
         default:
             return RX5808_SEL0_PIN;
     }
+#endif
 }
 
 int RssiNode::rssiInputPinForNodeIndex(int nIdx)
 {
+#if XIAO_BOARD_FLAG
+    switch (nIdx)
+    {
+        case 1:
+            return RSSI_INPUT1_PIN;
+        case 2:
+            return RSSI_INPUT2_PIN;
+        case 3:
+            return RSSI_INPUT3_PIN;
+        default:
+            return RSSI_INPUT0_PIN;
+    }
+#else
     switch (nIdx)
     {
         case 1:
@@ -529,6 +556,7 @@ int RssiNode::rssiInputPinForNodeIndex(int nIdx)
         default:
             return RSSI_INPUT0_PIN;
     }
+#endif
 }
 
 #endif
